@@ -9,7 +9,7 @@ from rag.embeddings import embed
 
 client = chromadb.PersistentClient(path=str(CHROMA_DIR))
 collection = client.get_or_create_collection(COLLECTION_NAME)
-
+print(collection.count())
 
 def add_documents(docs: list[dict]) -> int:
     chunks, metadatas = [], []
@@ -30,7 +30,7 @@ def add_documents(docs: list[dict]) -> int:
     return len(chunks)
 
 
-def search(question: str, limit: int = 4) -> list[dict]:
+def search(question: str, limit: int = 10) -> list[dict]:
     result = collection.query(
         query_embeddings=embed([question]),
         n_results=limit,

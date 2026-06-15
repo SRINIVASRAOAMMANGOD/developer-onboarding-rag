@@ -8,10 +8,26 @@ from rag.store import search
 
 def answer_question(question: str) -> dict:
     matches = search(question)
-    context = "\n\n".join(f"Source: {m['source']}\n{m['text']}" for m in matches)
+    print("\n=== RETRIEVAL DEBUG ===")
 
+    for i, m in enumerate(matches, 1):
+        print(f"\nChunk {i}")
+        print(f"Source: {m['source']}")
+        print(f"Distance: {m['distance']:.4f}")
+        print(f"Preview: {m['text'][:200]}")
     if not matches:
         return {"answer": "No indexed documents found.", "sources": []}
+
+    threshold = float(os.getenv("SCORE_THRESHOLD", "1.0"))
+    relevant_matches = [m for m in matches if m["distance"] <= threshold]
+
+    if not relevant_matches:
+        print(f"\nQuestion: {question}")
+        print("=== NO RELEVANT DOCUMENTS FOUND ===")
+        print(f"Top match distance: {matches[0]['distance']:.4f} (Threshold: {threshold})")
+        return {"answer": "No relevant documents found.", "sources": []}
+
+    context = "\n\n".join(f"Source: {m['source']}\n{m['text']}" for m in relevant_matches)
 
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
@@ -45,7 +61,7 @@ Answer:
     response.raise_for_status()
     answer = response.json()["choices"][0]["message"]["content"]
 
-    sources = sorted({match["source"] for match in matches})
+    sources = sorted({match["source"] for match in relevant_matches})
 
     print(question)
 

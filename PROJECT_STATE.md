@@ -15,6 +15,8 @@ Converted to a simple Python-only RAG app.
 - OpenRouter chat answers
 - Model switching through `.env`
 - Source citations
+- Similarity search score threshold check (`SCORE_THRESHOLD` in `.env`)
+- Removed OpenSpec workflows, skills, and configurations (`openspec/`, `.agent/`, `.codex/`, `.opencode/`, `structure.txt`)
 
 ## Local URLs
 
@@ -23,4 +25,5 @@ Converted to a simple Python-only RAG app.
 
 ## Environment
 
-Set `OPENROUTER_API_KEY` in `.env`.
+Set `OPENROUTER_API_KEY` and `SCORE_THRESHOLD` in `.env`.
+
