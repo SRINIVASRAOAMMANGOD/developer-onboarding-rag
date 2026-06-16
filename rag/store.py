@@ -13,7 +13,13 @@ print(collection.count())
 
 def add_documents(docs: list[dict]) -> int:
     chunks, metadatas = [], []
+
     for doc in docs:
+        try:
+            collection.delete(where={"source": doc["source"]})
+        except Exception:
+            pass
+
         for chunk in split_text(doc["text"]):
             chunks.append(chunk)
             metadatas.append({"source": doc["source"]})
@@ -27,9 +33,11 @@ def add_documents(docs: list[dict]) -> int:
         embeddings=embed(chunks),
         metadatas=metadatas,
     )
+
+    print("Chunks added:", len(chunks))
+    print("Collection count:", collection.count())
+
     return len(chunks)
-
-
 def search(question: str, limit: int = 10) -> list[dict]:
     result = collection.query(
         query_embeddings=embed([question]),
