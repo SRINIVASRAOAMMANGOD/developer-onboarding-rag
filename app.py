@@ -13,6 +13,9 @@ st.set_page_config(
 )
 
 st.title("Developer Onboarding Assistant")
+st.info(
+    "First request may take longer than usual while backend services initialize."
+)
 
 # Backend Health Check
 backend_online = True
