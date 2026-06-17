@@ -1,51 +1,471 @@
-# Engineering Intelligence Hub
+# Developer Onboarding Assistant
 
-A lightweight RAG-powered Developer Onboarding Assistant.
+A lightweight Retrieval-Augmented Generation (RAG) application that allows users to upload documents and ask questions grounded in those documents.
 
-New developers can upload project documents and ask questions. The app answers using the uploaded docs and shows citations.
+The project was built to learn and understand the complete RAG pipeline through hands-on implementation using FastAPI, Streamlit, ChromaDB, Sentence Transformers, and OpenRouter.
 
-## Stack
+---
 
-- Streamlit frontend
-- FastAPI REST API
-- ChromaDB vector store
-- `BAAI/bge-small-en-v1.5` embeddings
-- OpenRouter API
-- Gemini through OpenRouter
+# Features
 
-## Run Locally
+* Upload PDF, TXT, and Markdown files
+* Automatic text extraction
+* Recursive document chunking
+* Embedding generation using Sentence Transformers
+* ChromaDB vector storage
+* Semantic search retrieval
+* LLM-powered question answering via OpenRouter
+* Source citations
+* Duplicate document prevention
+* Retrieval debugging
+* Hallucination prevention
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
+---
+
+# Architecture
+
+```text
+User Question
+      ↓
+Semantic Search (ChromaDB)
+      ↓
+Relevant Chunks Retrieved
+      ↓
+Context Creation
+      ↓
+OpenRouter LLM
+      ↓
+Final Answer + Sources
 ```
 
-Add your OpenRouter key to `.env`.
+---
 
-Start the API:
+# Tech Stack
 
-```bash
-uvicorn api:app --reload --port 8000
+Backend
+
+* FastAPI
+
+Frontend
+
+* Streamlit
+
+Vector Database
+
+* ChromaDB
+
+Embeddings
+
+* BAAI/bge-small-en-v1.5
+
+LLM
+
+* OpenRouter
+
+PDF Processing
+
+* PyPDF
+
+Chunking
+
+* LangChain RecursiveCharacterTextSplitter
+
+---
+
+# Project Structure
+
+```text
+Engineering Intelligence Hub/
+│
+├── api.py
+├── app.py
+├── requirements.txt
+├── .env
+│
+├── uploads/
+│
+├── data/
+│   └── chroma/
+│
+└── rag/
+    ├── chain.py
+    ├── documents.py
+    ├── embeddings.py
+    ├── store.py
+    └── config.py
 ```
 
-Start the UI in another terminal:
+---
 
-```bash
-streamlit run app.py
+# File Responsibilities
+
+## api.py
+
+FastAPI backend.
+
+Responsibilities:
+
+* File upload endpoint
+* Question answering endpoint
+* Health check endpoint
+
+---
+
+## app.py
+
+Streamlit frontend.
+
+Responsibilities:
+
+* Upload files
+* Ask questions
+* Display answers
+* Display sources
+
+---
+
+## rag/config.py
+
+Stores application configuration.
+
+Examples:
+
+* OpenRouter URL
+* Model name
+* Upload directory
+* Chroma directory
+
+---
+
+## rag/documents.py
+
+Handles document loading and chunking.
+
+Responsibilities:
+
+* PDF text extraction
+* TXT loading
+* Markdown loading
+* Chunk generation
+
+Uses:
+
+```python
+RecursiveCharacterTextSplitter
 ```
 
-## Use
+instead of manual character slicing.
 
-1. Upload a PDF, TXT, or Markdown file.
-2. Click `Index document`.
-3. Ask a question.
-4. Read the answer and citations.
+---
 
-## Notes
+## rag/embeddings.py
 
-- PDFs must contain selectable text.
-- Uploaded files are stored in `data/uploads`.
-- ChromaDB data is stored in `data/chroma`.
-- Switch models by changing `OPENROUTER_MODEL` in `.env`.
+Generates embeddings.
+
+Responsibilities:
+
+```python
+Text
+ ↓
+Embedding Vector
+```
+
+Uses:
+
+```python
+BAAI/bge-small-en-v1.5
+```
+
+---
+
+## rag/store.py
+
+Handles ChromaDB operations.
+
+Responsibilities:
+
+* Store chunks
+* Store embeddings
+* Semantic search
+* Duplicate prevention
+
+Functions:
+
+* add_documents()
+* search()
+
+---
+
+## rag/chain.py
+
+Core RAG pipeline.
+
+Responsibilities:
+
+```text
+Question
+ ↓
+Retrieve Chunks
+ ↓
+Build Context
+ ↓
+Call OpenRouter
+ ↓
+Return Answer
+```
+
+This is the main orchestration layer.
+
+---
+
+# RAG Workflow
+
+## 1. Upload Document
+
+```text
+PDF
+ ↓
+Extract Text
+ ↓
+Split Into Chunks
+ ↓
+Generate Embeddings
+ ↓
+Store In ChromaDB
+```
+
+---
+
+## 2. Ask Question
+
+```text
+Question
+ ↓
+Question Embedding
+ ↓
+Vector Search
+ ↓
+Relevant Chunks
+ ↓
+Prompt Construction
+ ↓
+LLM
+ ↓
+Answer
+```
+
+---
+
+# Problems Encountered & Solutions
+
+## Problem 1: Poor Chunking
+
+Issue:
+
+Initial implementation used manual character slicing.
+
+```python
+text[start:start+size]
+```
+
+Problems:
+
+* Words cut in half
+* Context broken
+* Poor retrieval quality
+
+Solution:
+
+Replaced with:
+
+```python
+RecursiveCharacterTextSplitter
+```
+
+Benefits:
+
+* Better chunk boundaries
+* Preserves context
+* Improved retrieval
+
+---
+
+## Problem 2: Duplicate Indexing
+
+Issue:
+
+Uploading the same PDF multiple times created duplicate chunks.
+
+Example:
+
+```text
+Page 1
+Page 1
+Page 2
+Page 2
+```
+
+appeared during retrieval.
+
+Solution:
+
+Before indexing:
+
+```python
+collection.delete(
+    where={"source": doc["source"]}
+)
+```
+
+Then reinsert fresh chunks.
+
+Result:
+
+No duplicate chunks.
+
+---
+
+## Problem 3: Retrieval Quality Debugging
+
+Issue:
+
+Could not determine why answers were incorrect.
+
+Solution:
+
+Added retrieval debugging.
+
+Example:
+
+```python
+print(source)
+print(distance)
+print(chunk_preview)
+```
+
+Benefits:
+
+* Inspect retrieved chunks
+* Verify semantic search
+* Debug incorrect answers
+
+---
+
+# Performance Measurements
+
+Measured Latency:
+
+```text
+Search: 0.07 sec
+LLM: 3.466 sec
+```
+
+Observation:
+
+```text
+Retrieval ≈ 2%
+LLM ≈ 98%
+```
+
+Conclusion:
+
+The primary latency comes from the LLM, not ChromaDB.
+
+---
+
+# Hallucination Prevention
+
+Prompt includes:
+
+```text
+If the answer is not found in the context,
+say:
+"I do not know based on the uploaded documents."
+```
+
+Example:
+
+Question:
+
+```text
+What is India?
+```
+
+Answer:
+
+```text
+I do not know based on the uploaded documents.
+```
+
+This prevents unsupported answers.
+
+---
+
+# Current Status
+
+## P1 — Incorrect Answers
+
+Completed
+
+* Recursive chunking
+* Retrieval debugging
+* Duplicate prevention
+* Chroma reset
+* Retrieval testing
+* Hallucination prevention
+
+---
+
+## P2 — Latency
+
+Completed
+
+* Search timing
+* LLM timing
+* Bottleneck identification
+
+---
+
+## P3 — UI
+
+Future Improvements
+
+* Upload summary card
+* Document statistics
+* Automatic document summaries
+* Better source display
+
+---
+
+# Future Improvements
+
+* Summary query handling
+* Metadata filtering
+* Page-level retrieval
+* Reranking
+* Multi-user support
+* Authentication
+* Document deletion API
+* Cloud vector database deployment
+
+---
+
+# Learning Outcomes
+
+Through this project I learned:
+
+* RAG architecture
+* Embeddings
+* Vector databases
+* ChromaDB
+* Semantic search
+* Chunking strategies
+* Retrieval debugging
+* Prompt grounding
+* OpenRouter integration
+* FastAPI
+* Streamlit
+* End-to-end RAG system design
+
+```
+```
