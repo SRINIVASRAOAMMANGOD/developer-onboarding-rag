@@ -1,5 +1,5 @@
 import os
-
+import time
 import requests
 
 from rag.config import OPENROUTER_MODEL, OPENROUTER_URL
@@ -7,7 +7,10 @@ from rag.store import search
 
 
 def answer_question(question: str) -> dict:
+    start = time.time()
     matches = search(question)
+    print("Search:", round(time.time() - start, 3), "sec")
+
     print("\n=== RETRIEVAL DEBUG ===")
 
     for i, m in enumerate(matches, 1):
@@ -15,6 +18,7 @@ def answer_question(question: str) -> dict:
         print(f"Source: {m['source']}")
         print(f"Distance: {m['distance']:.4f}")
         print(f"Preview: {m['text'][:200]}")
+
     if not matches:
         return {"answer": "No indexed documents found.", "sources": []}
 
@@ -27,11 +31,17 @@ def answer_question(question: str) -> dict:
         print(f"Top match distance: {matches[0]['distance']:.4f} (Threshold: {threshold})")
         return {"answer": "No relevant documents found.", "sources": []}
 
-    context = "\n\n".join(f"Source: {m['source']}\n{m['text']}" for m in relevant_matches)
+    context = "\n\n".join(
+        f"Source: {m['source']}\n{m['text']}"
+        for m in relevant_matches
+    )
 
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        return {"answer": "Set OPENROUTER_API_KEY in your environment first.", "sources": []}
+        return {
+            "answer": "Set OPENROUTER_API_KEY in your environment first.",
+            "sources": [],
+        }
 
     prompt = f"""
 You are a helpful assistant.
@@ -49,6 +59,9 @@ Question:
 
 Answer:
 """
+
+    start = time.time()
+
     response = requests.post(
         OPENROUTER_URL,
         headers={"Authorization": f"Bearer {api_key}"},
@@ -58,6 +71,9 @@ Answer:
         },
         timeout=120,
     )
+
+    print("LLM:", round(time.time() - start, 3), "sec")
+
     response.raise_for_status()
     answer = response.json()["choices"][0]["message"]["content"]
 
