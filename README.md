@@ -2,7 +2,7 @@
 
 A lightweight Retrieval-Augmented Generation (RAG) application that allows users to upload documents and ask questions grounded in those documents.
 
-The project was built to learn and understand the complete RAG pipeline through hands-on implementation using FastAPI, Streamlit, ChromaDB, Sentence Transformers, and OpenRouter.
+The project was built to learn and understand the complete RAG pipeline through hands-on implementation using FastAPI, Streamlit, ChromaDB, Embedding APIs, and OpenRouter.
 
 ---
 
@@ -11,7 +11,7 @@ The project was built to learn and understand the complete RAG pipeline through 
 * Upload PDF, TXT, and Markdown files
 * Automatic text extraction
 * Recursive document chunking
-* Embedding generation using Sentence Transformers
+* Embedding generation via Embedding API
 * ChromaDB vector storage
 * Semantic search retrieval
 * LLM-powered question answering via OpenRouter
@@ -19,6 +19,7 @@ The project was built to learn and understand the complete RAG pipeline through 
 * Duplicate document prevention
 * Retrieval debugging
 * Hallucination prevention
+* Latency measurement
 
 ---
 
@@ -26,6 +27,8 @@ The project was built to learn and understand the complete RAG pipeline through 
 
 ```text
 User Question
+      ↓
+Embedding API
       ↓
 Semantic Search (ChromaDB)
       ↓
@@ -42,31 +45,31 @@ Final Answer + Sources
 
 # Tech Stack
 
-Backend
+## Backend
 
 * FastAPI
 
-Frontend
+## Frontend
 
 * Streamlit
 
-Vector Database
+## Vector Database
 
 * ChromaDB
 
-Embeddings
+## Embeddings
 
-* BAAI/bge-small-en-v1.5
+* Embedding API (OpenAI/OpenRouter Compatible)
 
-LLM
+## LLM
 
 * OpenRouter
 
-PDF Processing
+## PDF Processing
 
 * PyPDF
 
-Chunking
+## Chunking
 
 * LangChain RecursiveCharacterTextSplitter
 
@@ -75,16 +78,15 @@ Chunking
 # Project Structure
 
 ```text
-Engineering Intelligence Hub/
+Developer Onboarding Assistant/
 │
 ├── api.py
 ├── app.py
 ├── requirements.txt
 ├── .env
 │
-├── uploads/
-│
 ├── data/
+│   ├── uploads/
 │   └── chroma/
 │
 └── rag/
@@ -131,9 +133,10 @@ Stores application configuration.
 Examples:
 
 * OpenRouter URL
-* Model name
+* OpenRouter model
 * Upload directory
 * Chroma directory
+* Score threshold
 
 ---
 
@@ -164,17 +167,20 @@ Generates embeddings.
 
 Responsibilities:
 
-```python
+```text
 Text
+ ↓
+Embedding API
  ↓
 Embedding Vector
 ```
 
-Uses:
+Benefits:
 
-```python
-BAAI/bge-small-en-v1.5
-```
+* No local embedding model
+* Lower memory usage
+* Faster deployment
+* Better cloud compatibility
 
 ---
 
@@ -260,7 +266,7 @@ Answer
 
 ## Problem 1: Poor Chunking
 
-Issue:
+### Issue
 
 Initial implementation used manual character slicing.
 
@@ -274,7 +280,7 @@ Problems:
 * Context broken
 * Poor retrieval quality
 
-Solution:
+### Solution
 
 Replaced with:
 
@@ -282,17 +288,17 @@ Replaced with:
 RecursiveCharacterTextSplitter
 ```
 
-Benefits:
+### Benefits
 
 * Better chunk boundaries
 * Preserves context
-* Improved retrieval
+* Improved retrieval quality
 
 ---
 
 ## Problem 2: Duplicate Indexing
 
-Issue:
+### Issue
 
 Uploading the same PDF multiple times created duplicate chunks.
 
@@ -307,7 +313,7 @@ Page 2
 
 appeared during retrieval.
 
-Solution:
+### Solution
 
 Before indexing:
 
@@ -319,7 +325,7 @@ collection.delete(
 
 Then reinsert fresh chunks.
 
-Result:
+### Result
 
 No duplicate chunks.
 
@@ -327,11 +333,11 @@ No duplicate chunks.
 
 ## Problem 3: Retrieval Quality Debugging
 
-Issue:
+### Issue
 
 Could not determine why answers were incorrect.
 
-Solution:
+### Solution
 
 Added retrieval debugging.
 
@@ -343,11 +349,62 @@ print(distance)
 print(chunk_preview)
 ```
 
-Benefits:
+### Benefits
 
 * Inspect retrieved chunks
 * Verify semantic search
 * Debug incorrect answers
+
+---
+
+## Problem 4: Deployment Memory Limit
+
+### Issue
+
+Render Free Tier provides:
+
+```text
+512 MB RAM
+```
+
+The SentenceTransformer model and Torch dependencies exceeded the available memory during startup.
+
+Result:
+
+```text
+Out of memory (used over 512Mi)
+```
+
+### Solution
+
+Replaced local embedding generation with an Embedding API.
+
+Before:
+
+```text
+Document
+ ↓
+SentenceTransformer
+ ↓
+Embeddings
+```
+
+After:
+
+```text
+Document
+ ↓
+Embedding API
+ ↓
+Embeddings
+```
+
+### Benefits
+
+* Lower RAM usage
+* Faster startup
+* Easier deployment on free hosting platforms
+* No local model downloads
 
 ---
 
@@ -380,6 +437,7 @@ Prompt includes:
 ```text
 If the answer is not found in the context,
 say:
+
 "I do not know based on the uploaded documents."
 ```
 
@@ -388,7 +446,7 @@ Example:
 Question:
 
 ```text
-What is India?
+What is AI?
 ```
 
 Answer:
@@ -428,7 +486,9 @@ Completed
 
 ## P3 — UI
 
-Future Improvements
+In Progress
+
+Planned:
 
 * Upload summary card
 * Document statistics
@@ -443,10 +503,34 @@ Future Improvements
 * Metadata filtering
 * Page-level retrieval
 * Reranking
+* Hybrid search
+* Embedding caching
+* Query expansion
+* Streaming responses
 * Multi-user support
 * Authentication
 * Document deletion API
 * Cloud vector database deployment
+
+---
+
+# Deployment
+
+## Frontend
+
+Streamlit Cloud
+
+## Backend
+
+FastAPI
+
+## Environment Variables
+
+```env
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=
+SCORE_THRESHOLD=
+```
 
 ---
 
@@ -467,6 +551,16 @@ Through this project I learned:
 * Streamlit
 * End-to-end RAG system design
 
-```
+---
+
+# Live Demo
+
+Frontend:
+
 https://engineering-intelligence-rag.streamlit.app/
-```
+
+---
+
+# Key Takeaway
+
+This project demonstrates a complete end-to-end RAG pipeline, from document ingestion and vector storage to semantic retrieval and grounded answer generation, while addressing real-world challenges such as chunking quality, duplicate indexing, hallucination prevention, deployment constraints, and performance analysis.
