@@ -12,14 +12,20 @@ collection = client.get_or_create_collection(COLLECTION_NAME)
 print(collection.count())
 
 def add_documents(docs: list[dict]) -> int:
-    chunks, metadatas = [], []
+    global collection
+
+    # Clear old documents
+    try:
+        client.delete_collection(COLLECTION_NAME)
+    except Exception:
+        pass
+
+    collection = client.get_or_create_collection(COLLECTION_NAME)
+
+    chunks = []
+    metadatas = []
 
     for doc in docs:
-        try:
-            collection.delete(where={"source": doc["source"]})
-        except Exception:
-            pass
-
         for chunk in split_text(doc["text"]):
             chunks.append(chunk)
             metadatas.append({"source": doc["source"]})
@@ -36,6 +42,8 @@ def add_documents(docs: list[dict]) -> int:
 
     print("Chunks added:", len(chunks))
     print("Collection count:", collection.count())
+
+    return len(chunks)
 
     return len(chunks)
 def search(question: str, limit: int = 10) -> list[dict]:
