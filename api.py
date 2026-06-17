@@ -12,6 +12,9 @@ app = FastAPI(title="Developer Onboarding Assistant")
 class Question(BaseModel):
     question: str
 
+@app.get("/")
+def home():
+    return {"message": "Developer Onboarding Assistant API Running"}
 
 @app.get("/health")
 def health():
