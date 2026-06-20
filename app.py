@@ -17,21 +17,7 @@ st.info(
     "First request may take longer than usual while backend services initialize."
 )
 
-# Backend Health Check
-backend_online = True
 
-try:
-    response = requests.get(f"{API_URL}/health", timeout=2)
-    if response.status_code != 200:
-        backend_online = False
-except requests.exceptions.RequestException:
-    backend_online = False
-
-if not backend_online:
-    st.error(
-        "Cannot connect to FastAPI backend. "
-        "Please ensure the server is running on port 8000."
-    )
 
 # Layout
 left, right = st.columns([1, 3])
@@ -51,39 +37,38 @@ with left:
         st.success(uploaded_file.name)
 
         if st.button("Index Document/ Upload Document", use_container_width=True):
-            if backend_online:
-                files = {
-                    "file": (
-                        uploaded_file.name,
-                        uploaded_file.getvalue(),
-                        uploaded_file.type
+            files = {
+                "file": (
+                    uploaded_file.name,
+                    uploaded_file.getvalue(),
+                    uploaded_file.type
+                )
+            }
+
+            try:
+                progress = st.progress(0)
+
+                progress.progress(20)
+
+                response = requests.post(
+                    f"{API_URL}/upload",
+                    files=files,
+                    timeout=120
+                )
+
+                progress.progress(100)
+
+                if response.status_code == 200:
+                    data = response.json()
+
+                    st.info(
+                        f"Indexed {data['chunks']} chunks"
                     )
-                }
+                else:
+                    st.error(response.text)
 
-                try:
-                    progress = st.progress(0)
-
-                    progress.progress(20)
-
-                    response = requests.post(
-                        f"{API_URL}/upload",
-                        files=files,
-                        timeout=120
-                    )
-
-                    progress.progress(100)
-
-                    if response.status_code == 200:
-                        data = response.json()
-
-                        st.info(
-                            f"Indexed {data['chunks']} chunks"
-                        )
-                    else:
-                        st.error(response.text)
-
-                except Exception as e:
-                    st.error(str(e))
+            except Exception as e:
+                st.error(str(e))
 
 # -------------------------
 # Right Panel - Chat
@@ -96,27 +81,26 @@ with right:
     )
 
     if st.button("Ask"):
-        if backend_online:
-            try:
-                response = requests.post(
-                    f"{API_URL}/ask",
-                    json={"question": question},
-                    timeout=120
-                )
+        try:
+            response = requests.post(
+                f"{API_URL}/ask",
+                json={"question": question},
+                timeout=120
+            )
 
-                if response.status_code == 200:
-                    result = response.json()
+            if response.status_code == 200:
+                result = response.json()
 
-                    st.markdown("### Answer")
-                    st.write(result["answer"])
+                st.markdown("### Answer")
+                st.write(result["answer"])
 
-                    st.markdown("### Sources")
+                st.markdown("### Sources")
 
-                    for source in result["sources"]:
-                        st.write(f"- {source}")
+                for source in result["sources"]:
+                    st.write(f"- {source}")
 
-                else:
-                    st.error(response.text)
+            else:
+                st.error(response.text)
 
-            except Exception as e:
-                st.error(str(e))
+        except Exception as e:
+            st.error(str(e))

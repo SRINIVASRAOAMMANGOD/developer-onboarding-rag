@@ -111,6 +111,46 @@ Responsibilities:
 * Question answering endpoint
 * Health check endpoint
 
+### Interactive API Documentation Routes
+
+* **Swagger UI** (interactive documentation to test the endpoints directly from the browser):
+  - URL: `http://localhost:8000/docs`
+* **ReDoc** (clean, responsive 3-column API specification documentation):
+  - URL: `http://localhost:8000/redoc`
+* **OpenAPI Schema** (the raw OpenAPI spec in JSON format):
+  - URL: `http://localhost:8000/openapi.json`
+
+### API Endpoints
+
+* **`GET /`**
+  - **Description**: Welcome health check message confirming the API is running.
+  - **Response**: `{"message": "Developer Onboarding Assistant API Running"}`
+
+* **`GET /health`**
+  - **Description**: Backend service health status check.
+  - **Response**: `{"status": "ok"}`
+
+* **`POST /upload`**
+  - **Description**: Upload a PDF, TXT, or Markdown document. It parses, chunks, generates embeddings, and indexes the document in the vector store.
+  - **Request**: Multipart Form Data with `file` field.
+  - **Response**: `{"filename": "document.pdf", "chunks": 12, "message": "indexed"}`
+
+* **`POST /ask`**
+  - **Description**: Answer questions based on the uploaded documents using search and LLM context.
+  - **Request Body**:
+    ```json
+    {
+      "question": "What is RAG?"
+    }
+    ```
+  - **Response**:
+    ```json
+    {
+      "answer": "RAG stands for...",
+      "sources": ["document.pdf, page 1"]
+    }
+    ```
+
 ---
 
 ## app.py
@@ -511,6 +551,58 @@ Planned:
 * Authentication
 * Document deletion API
 * Cloud vector database deployment
+
+---
+
+# How to Run Locally
+
+Follow these steps to run the backend API and frontend UI locally.
+
+## 1. Setup Virtual Environment and Install Dependencies
+
+```bash
+# Create a virtual environment
+python -m venv .venv
+
+# Activate the virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+## 2. Configure Environment Variables
+
+Create a `.env` file in the project root with the following variables:
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+OPENROUTER_MODEL=google/gemini-2.5-flash-lite
+SCORE_THRESHOLD=1.0
+```
+
+## 3. Run the FastAPI Backend
+
+Run the FastAPI application using Uvicorn:
+
+```bash
+python -m uvicorn api:app --host 127.0.0.1 --port 8000
+```
+
+The API will be available at `http://localhost:8000`.
+
+## 4. Run the Streamlit Frontend
+
+Run the Streamlit frontend:
+
+```bash
+streamlit run app.py
+```
+
+The Streamlit UI will be available at `http://localhost:8501`.
 
 ---
 
