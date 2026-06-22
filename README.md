@@ -501,28 +501,50 @@ This prevents unsupported answers.
 
 # Current Status
 
-## P1 — Incorrect Answers
+## P1 — Incorrect Answers (Solved)
 
-Completed
+### Recursive Chunking
 
-* Recursive chunking
-* Retrieval debugging
-* Duplicate prevention
-* Chroma reset
-* Retrieval testing
-* Hallucination prevention
+Replaced manual chunking with `RecursiveCharacterTextSplitter` to preserve context and improve retrieval quality.
+
+### Retrieval Debugging
+
+Logged retrieved chunks, similarity scores, and sources to identify why incorrect answers were returned.
+
+### Duplicate Prevention
+
+Removed duplicate vectors/chunks that were polluting retrieval results.
+
+### Chroma Reset
+
+Reset collections during uploads to prevent old documents from contaminating new searches.
+
+### Retrieval Testing
+
+Tested different queries and analyzed retrieved context before changing prompts or models.
+
+### Hallucination Prevention
+
+Added `SCORE_THRESHOLD` filtering so low-confidence retrievals return "I don't know" instead of generating incorrect answers.
 
 ---
 
-## P2 — Latency
+## P2 — Latency (Solved)
 
-Completed
+### Search Timing
 
-* Search timing
-* LLM timing
-* Bottleneck identification
+Measured vector search latency separately.
+
+### LLM Timing
+
+Measured OpenRouter response generation time separately.
+
+### Bottleneck Identification
+
+Identified that most delay came from LLM inference rather than ChromaDB retrieval, helping focus optimization efforts on the right component.
 
 ---
+
 
 ## P3 — UI
 
